@@ -1,3 +1,3 @@
 export default function Page() {
-  return <div>(dashboard)/assets</div>;
+  return <h1 className="text-xl font-semibold">Assets</h1>;
 }
