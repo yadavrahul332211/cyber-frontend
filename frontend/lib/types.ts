@@ -30,3 +30,14 @@ export type Finding = {
   remediation: string | null;
   created_at: string;
 };
+
+export type NewFinding = {
+  title: string;
+  severity: string;
+  description?: string | null;
+  scanner?: string | null;
+  host?: string | null;
+  port?: number | null;
+  evidence?: string | null;
+  remediation?: string | null;
+};
