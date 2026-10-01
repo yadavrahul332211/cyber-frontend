@@ -2,19 +2,31 @@ export type Asset = {
   id: number;
   name: string;
   type: string;
+  url: string | null;
+  ip: string | null;
   created_at: string;
+  updated_at: string;
+};
+
+export type NewAsset = {
+  name: string;
+  type: string;
+  url: string | null;
+  ip: string | null;
 };
 
 export type Severity = "critical" | "high" | "medium" | "low" | "info";
 
 export type Finding = {
   id: number;
-  asset: string;
-  type: string;
-  source: string;
+  asset_id: number | null;
   title: string;
   severity: Severity;
-  evidence: string;
-  remediation: string;
-  status: "open" | "resolved";
+  description: string | null;
+  scanner: string | null;
+  host: string | null;
+  port: number | null;
+  evidence: string | null;
+  remediation: string | null;
+  created_at: string;
 };

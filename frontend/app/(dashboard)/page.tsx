@@ -27,13 +27,12 @@ export default function OverviewPage() {
   if (loading) return <p className="text-sm text-gray-500">Loading…</p>;
   if (error) return <p className="text-sm text-red-600">{error}</p>;
 
-  const open = findings.filter((f) => f.status === "open");
-  const count = (s: Severity) => open.filter((f) => f.severity === s).length;
+  const count = (s: Severity) => findings.filter((f) => f.severity === s).length;
   const max = Math.max(1, ...levels.map(count));
 
   const tiles = [
     { label: "Assets", value: assets.length },
-    { label: "Open findings", value: open.length },
+    { label: "Findings", value: findings.length },
     { label: "Critical", value: count("critical") },
     { label: "High", value: count("high") },
   ];
@@ -52,16 +51,13 @@ export default function OverviewPage() {
       </div>
 
       <div className="rounded border bg-white p-4">
-        <h2 className="mb-3 text-sm font-medium">Open findings by severity</h2>
+        <h2 className="mb-3 text-sm font-medium">Findings by severity</h2>
         <div className="space-y-2">
           {levels.map((s) => (
             <div key={s} className="flex items-center gap-3 text-sm">
               <span className="w-16 text-gray-600">{s}</span>
               <div className="h-3 flex-1 rounded bg-gray-100">
-                <div
-                  className="h-3 rounded bg-gray-700"
-                  style={{ width: `${(count(s) / max) * 100}%` }}
-                />
+                <div className="h-3 rounded bg-gray-700" style={{ width: `${(count(s) / max) * 100}%` }} />
               </div>
               <span className="w-6 text-right">{count(s)}</span>
             </div>
@@ -72,16 +68,12 @@ export default function OverviewPage() {
       <div className="rounded border bg-white p-4">
         <h2 className="mb-3 text-sm font-medium">Recent findings</h2>
         {findings.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No findings yet. Add an asset and run a scan.
-          </p>
+          <p className="text-sm text-gray-500">No findings yet. Add an asset and run a scan.</p>
         ) : (
           <ul className="space-y-2 text-sm">
             {findings.slice(0, 5).map((f) => (
               <li key={f.id} className="flex items-center justify-between">
-                <Link href={`/findings/${f.id}`} className="hover:underline">
-                  {f.title}
-                </Link>
+                <Link href={`/findings/${f.id}`} className="hover:underline">{f.title}</Link>
                 <SeverityBadge severity={f.severity} />
               </li>
             ))}
