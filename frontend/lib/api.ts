@@ -6,7 +6,7 @@ const SEVERITIES: Severity[] = ["critical", "high", "medium", "low", "info"];
 
 type RawFinding = Omit<Finding, "severity"> & { severity: string };
 
-function toFinding(raw: RawFinding): Finding {
+export function toFinding(raw: RawFinding): Finding {
   const s = String(raw.severity).toLowerCase() as Severity;
   return { ...raw, severity: SEVERITIES.includes(s) ? s : "info" };
 }
