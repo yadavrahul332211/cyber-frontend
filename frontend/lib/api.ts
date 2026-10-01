@@ -1,4 +1,4 @@
-import type { Asset, Finding, NewAsset, Severity } from "./types";
+import type { Asset, Finding, NewAsset, NewFinding, Severity } from "./types";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 const BASE = "/api";
@@ -6,7 +6,7 @@ const SEVERITIES: Severity[] = ["critical", "high", "medium", "low", "info"];
 
 type RawFinding = Omit<Finding, "severity"> & { severity: string };
 
-function toFinding(raw: RawFinding): Finding {
+export function toFinding(raw: RawFinding): Finding {
   const s = String(raw.severity).toLowerCase() as Severity;
   return { ...raw, severity: SEVERITIES.includes(s) ? s : "info" };
 }
@@ -77,4 +77,34 @@ export async function getFinding(id: number): Promise<Finding> {
     return f;
   }
   return toFinding(await request<RawFinding>(`/findings/${id}`));
+}
+
+export async function ingestFindings(
+  assetId: number,
+  findings: NewFinding[]
+): Promise<{ asset_id: number; created: number }> {
+  if (USE_MOCK) {
+    for (const f of findings) {
+      mockFindings.push(
+        toFinding({
+          id: mockFindings.length + 1,
+          asset_id: assetId,
+          description: null,
+          scanner: null,
+          host: null,
+          port: null,
+          evidence: null,
+          remediation: null,
+          created_at: new Date().toISOString(),
+          ...f,
+        })
+      );
+    }
+    return { asset_id: assetId, created: findings.length };
+  }
+  return request("/findings/ingest", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset_id: assetId, findings }),
+  });
 }
