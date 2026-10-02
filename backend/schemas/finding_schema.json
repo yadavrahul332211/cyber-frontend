@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CYBER Finding",
+  "description": "Common normalized security finding format used by Nmap and Nuclei parsers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "asset",
+    "type",
+    "source",
+    "title",
+    "severity",
+    "evidence",
+    "status"
+  ],
+  "properties": {
+    "asset": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "web",
+        "server",
+        "network",
+        "host",
+        "other"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "nmap",
+        "nuclei"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "evidence": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "resolved",
+        "ignored"
+      ]
+    }
+  }
+}
