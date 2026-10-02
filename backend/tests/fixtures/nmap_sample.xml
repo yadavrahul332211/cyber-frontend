@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmaprun>
+    <host>
+        <status state="up"/>
+
+        <address
+            addr="192.168.1.10"
+            addrtype="ipv4"/>
+
+        <ports>
+
+            <port
+                protocol="tcp"
+                portid="22">
+
+                <state
+                    state="open"
+                    reason="syn-ack"/>
+
+                <service
+                    name="ssh"
+                    product="OpenSSH"
+                    version="9.6"/>
+
+            </port>
+
+            <port
+                protocol="tcp"
+                portid="80">
+
+                <state
+                    state="open"
+                    reason="syn-ack"/>
+
+                <service
+                    name="http"
+                    product="nginx"
+                    version="1.24"/>
+
+            </port>
+
+            <port
+                protocol="tcp"
+                portid="445">
+
+                <state
+                    state="open"
+                    reason="syn-ack"/>
+
+                <service
+                    name="microsoft-ds"/>
+
+            </port>
+
+        </ports>
+    </host>
+</nmaprun>

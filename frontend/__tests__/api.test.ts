@@ -3,15 +3,12 @@ import { toFinding } from "@/lib/api";
 
 const base = {
   id: 1,
-  asset_id: 1,
-  title: "SSH service exposed",
-  description: null,
-  scanner: "nmap",
-  host: "10.0.0.5",
-  port: 22,
-  evidence: null,
-  remediation: null,
-  created_at: "2026-10-01T09:00:00",
+  asset: "10.0.0.5",
+  type: "server",
+  source: "nmap",
+  title: "Open ssh service on port 22",
+  evidence: "Port: 22",
+  status: "open" as const,
 };
 
 describe("toFinding", () => {

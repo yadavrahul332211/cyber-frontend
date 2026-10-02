@@ -1,0 +1,2 @@
+{"template-id":"exposed-git","info":{"name":"Exposed Git Config","severity":"high","description":"Git configuration file is exposed.","remediation":"Remove the exposed Git configuration file and restrict access."},"host":"http://127.0.0.1","matched-at":"http://127.0.0.1/.git/config","port":"80"}
+{"template-id":"test-info","info":{"name":"Server Information","severity":"info","description":"Server information detected."},"host":"https://127.0.0.1","matched-at":"https://127.0.0.1","port":"443"}

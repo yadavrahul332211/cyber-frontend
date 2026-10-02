@@ -10,13 +10,9 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("@/lib/api", () => ({
-  getAssets: vi.fn().mockResolvedValue([
-    { id: 1, name: "Local test server", type: "server", url: null, ip: "10.0.0.5", created_at: "2026-10-01", updated_at: "2026-10-01" },
-    { id: 2, name: "Example website", type: "web", url: "https://example.com", ip: null, created_at: "2026-10-01", updated_at: "2026-10-01" },
-  ]),
   getFindings: vi.fn().mockResolvedValue([
-    { id: 1, asset_id: 1, title: "SSH service exposed", severity: "high", description: null, scanner: "nmap", host: "10.0.0.5", port: 22, evidence: null, remediation: null, created_at: "2026-10-01" },
-    { id: 2, asset_id: 2, title: "Exposed admin panel", severity: "critical", description: null, scanner: "nuclei", host: "example.com", port: 443, evidence: null, remediation: null, created_at: "2026-10-01" },
+    { id: 1, asset: "10.0.0.5", type: "server", source: "nmap", title: "SSH service exposed", severity: "high", evidence: "Port 22 open", status: "open" },
+    { id: 2, asset: "https://example.com", type: "web", source: "nuclei", title: "Exposed admin panel", severity: "critical", evidence: "GET /admin 200", status: "open" },
   ]),
 }));
 

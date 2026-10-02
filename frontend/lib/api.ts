@@ -1,4 +1,4 @@
-import type { Asset, Finding, NewAsset, NewFinding, Severity } from "./types";
+import type { Asset, Finding, NewAsset, Scanner, Severity } from "./types";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 const BASE = "/api";
@@ -25,24 +25,15 @@ let mockAssets: Asset[] = [
 ];
 
 const mockFindings: Finding[] = [
-  { id: 1, asset_id: 1, title: "Missing security header", severity: "medium", description: "The site does not send X-Frame-Options.", scanner: "nuclei", host: "example.com", port: 443, evidence: "Response has no X-Frame-Options header", remediation: "Add the X-Frame-Options header to all responses.", created_at: now },
-  { id: 2, asset_id: 2, title: "SSH service exposed", severity: "high", description: "SSH is reachable from the network.", scanner: "nmap", host: "10.0.0.5", port: 22, evidence: "22/tcp open ssh OpenSSH 7.4", remediation: "Restrict SSH to trusted IPs and disable password login.", created_at: now },
-  { id: 3, asset_id: 1, title: "Exposed admin panel", severity: "critical", description: "The admin panel is open to anyone.", scanner: "nuclei", host: "example.com", port: 443, evidence: "GET /admin returned 200 without authentication", remediation: "Put the admin panel behind authentication and a VPN.", created_at: now },
-  { id: 4, asset_id: 2, title: "Outdated web server version", severity: "low", description: "Old nginx version in use.", scanner: "nmap", host: "10.0.0.5", port: 80, evidence: "80/tcp open http nginx 1.14", remediation: "Upgrade nginx to the latest stable version.", created_at: now },
+  { id: 1, asset: "https://example.com", type: "web", source: "nuclei", title: "Missing security header", severity: "medium", evidence: "Host: https://example.com, Port: 443, Remediation: Add the X-Frame-Options header to all responses.", status: "open" },
+  { id: 2, asset: "10.0.0.5", type: "server", source: "nmap", title: "Open ssh service on port 22", severity: "medium", evidence: "Host: 10.0.0.5, Protocol: tcp, Port: 22, State: open, Service: ssh", status: "open" },
+  { id: 3, asset: "https://example.com", type: "web", source: "nuclei", title: "Exposed admin panel", severity: "critical", evidence: "Host: https://example.com, Matched-At: https://example.com/admin, Remediation: Put the admin panel behind authentication.", status: "open" },
+  { id: 4, asset: "10.0.0.5", type: "server", source: "nmap", title: "Open http service on port 80", severity: "low", evidence: "Host: 10.0.0.5, Protocol: tcp, Port: 80, State: open, Service: http", status: "resolved" },
 ];
 
 export async function getAssets(): Promise<Asset[]> {
-  if (USE_MOCK) return mockAssets;
+  if (USE_MOCK) return [...mockAssets];
   return request<Asset[]>("/assets");
-}
-
-export async function getAsset(id: number): Promise<Asset> {
-  if (USE_MOCK) {
-    const a = mockAssets.find((x) => x.id === id);
-    if (!a) throw new Error("Not found");
-    return a;
-  }
-  return request<Asset>(`/assets/${id}`);
 }
 
 export async function createAsset(input: NewAsset): Promise<Asset> {
@@ -65,7 +56,7 @@ export async function createAsset(input: NewAsset): Promise<Asset> {
 }
 
 export async function getFindings(): Promise<Finding[]> {
-  if (USE_MOCK) return mockFindings;
+  if (USE_MOCK) return [...mockFindings];
   const raw = await request<RawFinding[]>("/findings");
   return raw.map(toFinding);
 }
@@ -79,32 +70,31 @@ export async function getFinding(id: number): Promise<Finding> {
   return toFinding(await request<RawFinding>(`/findings/${id}`));
 }
 
-export async function ingestFindings(
-  assetId: number,
-  findings: NewFinding[]
-): Promise<{ asset_id: number; created: number }> {
+export async function ingestScan(
+  scanner: Scanner,
+  payload: string
+): Promise<{ created: number }> {
   if (USE_MOCK) {
-    for (const f of findings) {
-      mockFindings.push(
-        toFinding({
-          id: mockFindings.length + 1,
-          asset_id: assetId,
-          description: null,
-          scanner: null,
-          host: null,
-          port: null,
-          evidence: null,
-          remediation: null,
-          created_at: new Date().toISOString(),
-          ...f,
-        })
-      );
+    const count =
+      scanner === "nmap"
+        ? (payload.match(/<port\s/g) ?? []).length
+        : payload.split("\n").filter((l) => l.trim()).length;
+    for (let i = 0; i < count; i++) {
+      mockFindings.push({
+        id: mockFindings.length + 1,
+        asset: "mock-target",
+        type: scanner === "nmap" ? "server" : "web",
+        source: scanner,
+        title: `Imported ${scanner} finding ${i + 1}`,
+        severity: "low",
+        evidence: "Imported in mock mode",
+        status: "open",
+      });
     }
-    return { asset_id: assetId, created: findings.length };
+    return { created: count };
   }
-  return request("/findings/ingest", {
+  const qs = new URLSearchParams({ payload });
+  return request(`/findings/ingest/${scanner}?${qs.toString()}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ asset_id: assetId, findings }),
   });
 }
