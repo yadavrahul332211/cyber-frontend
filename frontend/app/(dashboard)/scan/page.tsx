@@ -1,70 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { getAssets, ingestFindings } from "@/lib/api";
-import type { Asset, NewFinding } from "@/lib/types";
+import { ingestScan } from "@/lib/api";
+import type { Scanner } from "@/lib/types";
 
 export default function ScanPage() {
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [assetId, setAssetId] = useState("");
-  const [findings, setFindings] = useState<NewFinding[]>([]);
+  const [scanner, setScanner] = useState<Scanner>("nmap");
+  const [text, setText] = useState("");
+  const [fileName, setFileName] = useState("");
   const [inputKey, setInputKey] = useState(0);
   const [error, setError] = useState("");
   const [result, setResult] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    getAssets()
-      .then((a) => {
-        setAssets(a);
-        if (a[0]) setAssetId(String(a[0].id));
-      })
-      .catch(() => setError("Couldn't load assets. Try again."));
-  }, []);
-
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     setResult("");
     setError("");
-    setFindings([]);
+    setText("");
+    setFileName("");
     if (!file) return;
-    try {
-      const data = JSON.parse(await file.text());
-      const list = Array.isArray(data) ? data : data.findings;
-      const valid =
-        Array.isArray(list) &&
-        list.length > 0 &&
-        list.every(
-          (f) => f && typeof f.title === "string" && typeof f.severity === "string"
-        );
-      if (!valid) throw new Error("invalid");
-      setFindings(list);
-    } catch {
-      setError(
-        "That file isn't valid. Upload a JSON list of findings, each with a title and severity."
-      );
-    }
+    setText(await file.text());
+    setFileName(file.name);
   }
 
   async function handleUpload() {
-    if (!assetId) {
-      setError("Choose an asset first");
-      return;
-    }
-    if (findings.length === 0) {
-      setError("Choose a findings file first");
+    if (!text.trim()) {
+      setError("Choose a scan file first");
       return;
     }
     setBusy(true);
     setError("");
+    setResult("");
     try {
-      const res = await ingestFindings(Number(assetId), findings);
+      const res = await ingestScan(scanner, text);
       setResult(`${res.created} findings added`);
-      setFindings([]);
+      setText("");
+      setFileName("");
       setInputKey((k) => k + 1);
     } catch {
-      setError("Couldn't upload the findings. Try again.");
+      setError(
+        scanner === "nmap"
+          ? "Couldn't read that file. Upload valid Nmap XML output."
+          : "Couldn't read that file. Upload valid Nuclei JSONL output."
+      );
     } finally {
       setBusy(false);
     }
@@ -74,40 +54,30 @@ export default function ScanPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Upload scan</h1>
       <p className="text-sm text-gray-600">
-        Upload a JSON file of normalized findings for one asset.
+        Upload raw scan output. Findings are parsed and saved by the backend.
       </p>
 
       <div className="space-y-3 rounded border bg-white p-4">
         <div>
-          <label className="mb-1 block text-sm text-gray-500">Asset</label>
+          <label className="mb-1 block text-sm text-gray-500">Scanner</label>
           <select
-            value={assetId}
-            onChange={(e) => setAssetId(e.target.value)}
+            value={scanner}
+            onChange={(e) => setScanner(e.target.value as Scanner)}
             className="rounded border bg-white p-2 text-sm"
           >
-            {assets.length === 0 && <option value="">No assets yet</option>}
-            {assets.map((a) => (
-              <option key={a.id} value={String(a.id)}>
-                {a.name}
-              </option>
-            ))}
+            <option value="nmap">Nmap (XML)</option>
+            <option value="nuclei">Nuclei (JSONL)</option>
           </select>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm text-gray-500">Findings file (.json)</label>
-          <input key={inputKey} type="file" accept=".json,application/json" onChange={handleFile} className="text-sm" />
-          {findings.length > 0 && (
-            <p className="mt-1 text-sm text-gray-600">{findings.length} findings ready to upload</p>
-          )}
+          <label className="mb-1 block text-sm text-gray-500">Scan file</label>
+          <input key={inputKey} type="file" accept=".xml,.json,.jsonl,.txt" onChange={handleFile} className="text-sm" />
+          {fileName && <p className="mt-1 text-sm text-gray-600">{fileName} ready to upload</p>}
         </div>
 
-        <button
-          onClick={handleUpload}
-          disabled={busy}
-          className="rounded bg-black px-4 py-2 text-sm text-white"
-        >
-          {busy ? "Uploading…" : "Upload findings"}
+        <button onClick={handleUpload} disabled={busy} className="rounded bg-black px-4 py-2 text-sm text-white">
+          {busy ? "Uploading…" : "Upload scan"}
         </button>
       </div>
 
@@ -115,9 +85,7 @@ export default function ScanPage() {
       {result && (
         <p className="text-sm text-green-700">
           {result}.{" "}
-          <Link href="/findings" className="underline">
-            View findings
-          </Link>
+          <Link href="/findings" className="underline">View findings</Link>
         </p>
       )}
     </div>
